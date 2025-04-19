@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lawyer Assistant & Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        body {
+            background: linear-gradient(135deg, #0A1D37, #1A3A6B);
+            min-height: 100vh;
+            color: #F5F5F5;
+        }
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+        .gold-btn {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+            transition: all 0.3s ease;
+        }
+        .gold-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        .nav-item.active {
+            border-left: 3px solid #FFD700;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-item:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .modal {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .notification-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #FFD700;
+            top: 2px;
+            right: 2px;
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 9999px;
+        }
+        .status-badge.ongoing {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #3B82F6;
+        }
+        .status-badge.upcoming {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+        }
+        .status-badge.closed {
+            background-color: rgba(107, 114, 128, 0.2);
+            color: #6B7280;
+        }
+        .status-badge.paid {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+        }
+        .status-badge.pending {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        .scrollbar-thin {
+            scrollbar-width: thin;
+        }
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 5px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-0 m-0">
+    <div id="app" class="flex h-screen overflow-hidden">
+        <!-- Sidebar (hidden on mobile) -->
+        <aside id="sidebar" class="hidden md:flex md:flex-col w-64 glass overflow-y-auto scrollbar-thin">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-white flex items-center">
+                    <i class="bi bi-scale mr-2 text-yellow-300"></i>
+                    LegalAssist
+                </h1>
+            </div>
+            
+            <nav class="mt-4 flex-grow">
+                <ul class="space-y-1 px-3">
+                    <li>
+                        <button onclick="showSection('dashboardContent')" class="nav-item active flex items-center w-full px-4 py-3 text-white rounded-lg">
+                            <i class="bi bi-grid-1x2 mr-3"></i>
+                            Dashboard
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('clientsContent')" class="nav-item flex items-center w-full px-4 py-3 text-white rounded-lg">
+                            <i class="bi bi-people mr-3"></i>
+                            Clients
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('casesContent')" class="nav-item flex items-center w-full px-4 py-3 text-white rounded-lg">
+                            <i class="bi bi-briefcase mr-3"></i>
+                            Cases
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('paymentsContent')" class="nav-item flex items-center w-full px-4 py-3 text-white rounded-lg">
+                            <i class="bi bi-cash-stack mr-3"></i>
+                            Payments
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showSection('remindersContent')" class="nav-item flex items-center w-full px-4 py-3 text-white rounded-lg">
+                            <i class="bi bi-bell mr-3"></i>
+                            Reminders
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="p-6">
+                <button onclick="logout()" class="w-full flex items-center justify-center space-x-2 px-4 py-2 text-white rounded-lg hover:bg-white/10">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Login Form (shown initially) -->
+            <div id="loginForm" class="flex items-center justify-center min-h-screen px-4">
+                <div class="glass p-8 rounded-xl max-w-md w-full fade-in">
+                    <div class="text-center mb-8">
+                        <div class="text-4xl text-yellow-300 mb-2"><i class="bi bi-scale"></i></div>
+                        <h2 class="text-3xl font-bold text-white">LegalAssist</h2>
+                        <p class="text-white/70 mt-2">Your Digital Legal Practice Manager</p>
+                    </div>
+                    
+                    <form onsubmit="handleLogin(event)" class="space-y-5">
+                        <div>
+                            <label for="email" class="block text-white/80 text-sm mb-1">Email</label>
+                            <input type="email" id="email" placeholder="yourname@firm.com" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none focus:ring-2 focus:ring-yellow-300/30">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-white/80 text-sm mb-1">Password</label>
+                            <input type="password" id="password" placeholder="••••••••" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none focus:ring-2 focus:ring-yellow-300/30">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="remember" class="mr-2">
+                                <label for="remember" class="text-white/70 text-sm">Remember me</label>
+                            </div>
+                            <a href="#" class="text-yellow-300 text-sm hover:underline">Forgot password?</a>
+                        </div>
+                        <button type="submit" class="w-full py-3 px-4 bg-yellow-300/20 text-yellow-300 font-semibold rounded-lg hover:bg-yellow-300/30 transition flex items-center justify-center">
+                            <span>Sign In</span>
+                            <i class="bi bi-arrow-right-circle ml-2"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Main Dashboard (Hidden by default) -->
+            <div id="dashboard" class="hidden flex flex-col h-full">
+                <!-- Top Navigation Bar -->
+                <header class="glass px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <!-- Mobile menu button -->
+                        <button id="mobileMenuBtn" class="md:hidden text-white p-2">
+                            <i class="bi bi-list text-xl"></i>
+                        </button>
+                        
+                        <h1 class="text-xl font-semibold text-white md:hidden">LegalAssist</h1>
+                        
+                        <div class="flex items-center space-x-4">
+                            <!-- Search -->
+                            <div class="hidden md:flex items-center bg-white/10 rounded-lg px-3 py-1.5">
+                                <i class="bi bi-search text-white/70"></i>
+                                <input type="text" placeholder="Search..." class="bg-transparent border-none text-white placeholder-white/50 focus:outline-none px-2">
+                            </div>
+                            
+                            <!-- Notifications -->
+                            <button class="relative p-2 text-white hover:bg-white/10 rounded-lg">
+                                <i class="bi bi-bell text-xl"></i>
+                                <span class="notification-dot"></span>
+                            </button>
+                            
+                            <!-- Profile -->
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-medium">
+                                    JS
+                                </div>
+                                <span class="hidden md:inline text-white">John Smith</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                
+                <!-- Mobile Sidebar (hidden by default) -->
+                <div id="mobileSidebar" class="hidden fixed inset-0 z-50">
+                    <div class="absolute inset-0 bg-black/50" onclick="closeMobileMenu()"></div>
+                    <div class="absolute top-0 left-0 h-full w-64 glass">
+                        <div class="p-6 flex justify-between items-center">
+                            <h1 class="text-2xl font-bold text-white flex items-center">
+                                <i class="bi bi-scale mr-2 text-yellow-300"></i>
+                                LegalAssist
+                            </h1>
+                            <button onclick="closeMobileMenu()" class="text-white">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        
+                        <nav class="mt-4">
+                            <ul class="space-y-1 px-3">
+                                <li>
+                                    <button onclick="showSection('dashboardContent'); closeMobileMenu();" class="nav-item active flex items-center w-full px-4 py-3 text-white rounded-lg">
+                                        <i class="bi bi-grid-1x2 mr-3"></i>
+                                        Dashboard
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onclick="showSection('clientsContent'); closeMobileMenu();" class="nav-item flex items-center w-full px-4 py-3 text-white rounded-lg">
+                                        <i class="bi bi-people mr-3"></i>
+                                        Clients
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onclick="showSection('casesContent'); closeMobileMenu();" class="nav-item flex items-center w-full px-4 py-3 text-white rounded-lg">
+                                        <i class="bi bi-briefcase mr-3"></i>
+                                        Cases
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onclick="showSection('paymentsContent'); closeMobileMenu();" class="nav-item flex items-center w-full px-4 py-3 text-white rounded-lg">
+                                        <i class="bi bi-cash-stack mr-3"></i>
+                                        Payments
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onclick="showSection('remindersContent'); closeMobileMenu();" class="nav-item flex items-center w-full px-4 py-3 text-white rounded-lg">
+                                        <i class="bi bi-bell mr-3"></i>
+                                        Reminders
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                        
+                        <div class="absolute bottom-0 left-0 right-0 p-6">
+                            <button onclick="logout()" class="w-full flex items-center justify-center space-x-2 px-4 py-2 text-white rounded-lg hover:bg-white/10">
+                                <i class="bi bi-box-arrow-left"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content Area -->
+                <main class="flex-1 overflow-y-auto p-4 md:p-6">
+                    <!-- Dashboard Content -->
+                    <div id="dashboardContent" class="fade-in">
+                        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+                            <h2 class="text-2xl font-bold text-white">Dashboard</h2>
+                            <p class="text-white/70"><span id="currentDate"></span></p>
+                        </div>
+                        
+                        <!-- Summary Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                            <div class="glass p-5 rounded-xl">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-white/70">Total Clients</p>
+                                        <h3 class="text-3xl font-semibold text-white mt-2">24</h3>
+                                    </div>
+                                    <div class="p-3 bg-blue-500/20 rounded-lg text-blue-400">
+                                        <i class="bi bi-people text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-green-400 text-sm mt-2">
+                                    <i class="bi bi-arrow-up"></i>
+                                    <span>12% from last month</span>
+                                </p>
+                            </div>
+                            
+                            <div class="glass p-5 rounded-xl">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-white/70">Active Cases</p>
+                                        <h3 class="text-3xl font-semibold text-white mt-2">12</h3>
+                                    </div>
+                                    <div class="p-3 bg-purple-500/20 rounded-lg text-purple-400">
+                                        <i class="bi bi-briefcase text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-yellow-400 text-sm mt-2">
+                                    <i class="bi bi-arrow-right"></i>
+                                    <span>Same as last month</span>
+                                </p>
+                            </div>
+                            
+                            <div class="glass p-5 rounded-xl">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-white/70">Upcoming Hearings</p>
+                                        <h3 class="text-3xl font-semibold text-white mt-2">7</h3>
+                                    </div>
+                                    <div class="p-3 bg-yellow-500/20 rounded-lg text-yellow-400">
+                                        <i class="bi bi-calendar-event text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-red-400 text-sm mt-2">
+                                    <i class="bi bi-arrow-up"></i>
+                                    <span>3 this week</span>
+                                </p>
+                            </div>
+                            
+                            <div class="glass p-5 rounded-xl">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-white/70">Pending Payments</p>
+                                        <h3 class="text-3xl font-semibold text-white mt-2">$15K</h3>
+                                    </div>
+                                    <div class="p-3 bg-green-500/20 rounded-lg text-green-400">
+                                        <i class="bi bi-cash-stack text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-red-400 text-sm mt-2">
+                                    <i class="bi bi-arrow-up"></i>
+                                    <span>$3K overdue</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Charts -->
+                            <div class="glass p-5 rounded-xl lg:col-span-2">
+                                <h4 class="text-lg font-semibold text-white mb-4">Case Statistics</h4>
+                                <div class="h-64">
+                                    <canvas id="casesChart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <!-- Today's Events -->
+                            <div class="glass p-5 rounded-xl">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-lg font-semibold text-white">Today's Schedule</h4>
+                                    <button class="text-yellow-300">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div class="flex p-3 bg-white/5 rounded-lg">
+                                        <div class="w-2 bg-blue-500 rounded-full mr-3"></div>
+                                        <div class="flex-1">
+                                            <p class="text-white font-medium">Johnson vs State</p>
+                                            <p class="text-white/70 text-sm">High Court - 10:00 AM</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex p-3 bg-white/5 rounded-lg">
+                                        <div class="w-2 bg-purple-500 rounded-full mr-3"></div>
+                                        <div class="flex-1">
+                                            <p class="text-white font-medium">Client Meeting</p>
+                                            <p class="text-white/70 text-sm">Robert Brown - 2:30 PM</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex p-3 bg-white/5 rounded-lg">
+                                        <div class="w-2 bg-yellow-500 rounded-full mr-3"></div>
+                                        <div class="flex-1">
+                                            <p class="text-white font-medium">Document Deadline</p>
+                                            <p class="text-white/70 text-sm">Smith Property Case - 5:00 PM</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button class="w-full mt-4 py-2 text-center text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition">
+                                    View All Events
+                                </button>
+                            </div>
+                            
+                            <!-- Recent Activity -->
+                            <div class="glass p-5 rounded-xl lg:col-span-2">
+                                <h4 class="text-lg font-semibold text-white mb-4">Recent Payments</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-white">
+                                        <thead>
+                                            <tr class="text-left border-b border-white/10">
+                                                <th class="py-3 px-2">Client</th>
+                                                <th class="py-3 px-2">Case</th>
+                                                <th class="py-3 px-2">Amount</th>
+                                                <th class="py-3 px-2">Status</th>
+                                                <th class="py-3 px-2">Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-white/10">
+                                                <td class="py-3 px-2">Robert Brown</td>
+                                                <td class="py-3 px-2">Criminal Case</td>
+                                                <td class="py-3 px-2">$2,500</td>
+                                                <td class="py-3 px-2"><span class="status-badge paid">Paid</span></td>
+                                                <td class="py-3 px-2">Jan 15, 2024</td>
+                                            </tr>
+                                            <tr class="border-b border-white/10">
+                                                <td class="py-3 px-2">Emily White</td>
+                                                <td class="py-3 px-2">Civil Case</td>
+                                                <td class="py-3 px-2">$1,800</td>
+                                                <td class="py-3 px-2"><span class="status-badge paid">Paid</span></td>
+                                                <td class="py-3 px-2">Jan 12, 2024</td>
+                                            </tr>
+                                            <tr class="border-b border-white/10">
+                                                <td class="py-3 px-2">Michael Johnson</td>
+                                                <td class="py-3 px-2">Property Dispute</td>
+                                                <td class="py-3 px-2">$3,200</td>
+                                                <td class="py-3 px-2"><span class="status-badge pending">Pending</span></td>
+                                                <td class="py-3 px-2">Jan 10, 2024</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Upcoming Hearings -->
+                            <div class="glass p-5 rounded-xl">
+                                <h4 class="text-lg font-semibold text-white mb-4">Upcoming Hearings</h4>
+                                <div class="space-y-3">
+                                    <div class="p-3 bg-white/5 rounded-lg">
+                                        <div class="flex justify-between">
+                                            <p class="text-white font-medium">Johnson vs State</p>
+                                            <p class="text-yellow-300 text-sm">Tomorrow</p>
+                                        </div>
+                                        <p class="text-white/70 text-sm mt-1">High Court - 10:00 AM</p>
+                                    </div>
+                                    
+                                    <div class="p-3 bg-white/5 rounded-lg">
+                                        <div class="flex justify-between">
+                                            <p class="text-white font-medium">Smith Property Case</p>
+                                            <p class="text-white/70 text-sm">In 3 days</p>
+                                        </div>
+                                        <p class="text-white/70 text-sm mt-1">District Court - 11:30 AM</p>
+                                    </div>
+                                    
+                                    <div class="p-3 bg-white/5 rounded-lg">
+                                        <div class="flex justify-between">
+                                            <p class="text-white font-medium">Harris Divorce Settlement</p>
+                                            <p class="text-white/70 text-sm">Feb 10, 2024</p>
+                                        </div>
+                                        <p class="text-white/70 text-sm mt-1">Family Court - 9:00 AM</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Clients Section -->
+                    <div id="clientsContent" class="hidden fade-in">
+                        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+                            <h2 class="text-2xl font-bold text-white">Clients</h2>
+                            <button onclick="showAddClientModal()" class="gold-btn mt-3 md:mt-0 py-2 px-4 rounded-lg flex items-center">
+                                <i class="bi bi-plus-circle mr-2"></i>
+                                Add New Client
+                            </button>
+                        </div>
+                        
+                        <!-- Filter Row -->
+                        <div class="glass p-4 rounded-xl mb-6 flex flex-wrap gap-4 items-center">
+                            <div class="flex-grow md:flex-grow-0 min-w-[200px]">
+                                <input type="text" placeholder="Search clients..." class="w-full p-2 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none">
+                            </div>
+                            <div class="flex-grow md:flex-grow-0">
+                                <select class="w-full p-2 rounded-lg bg-white/10 text-white outline-none">
+                                    <option value="">All Clients</option>
+                                    <option value="active">With Active Cases</option>
+                                    <option value="payment">With Pending Payments</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-2 ml-auto">
+                                <button class="p-2 rounded-lg bg-white/10 text-white">
+                                    <i class="bi bi-grid"></i>
+                                </button>
+                                <button class="p-2 rounded-lg bg-white/10 text-white">
+                                    <i class="bi bi-list"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Clients List -->
+                        <div class="glass rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-white">
+                                    <thead>
+                                        <tr class="text-left border-b border-white/20">
+                                            <th class="py-4 px-6">Name</th>
+                                            <th class="py-4 px-6">Email</th>
+                                            <th class="py-4 px-6">Phone</th>
+                                            <th class="py-4 px-6">Cases</th>
+                                            <th class="py-4 px-6">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="clientsTable">
+                                        <!-- Client rows will be added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cases Section -->
+                    <div id="casesContent" class="hidden fade-in">
+                        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+                            <h2 class="text-2xl font-bold text-white">Cases</h2>
+                            <button onclick="showAddCaseModal()" class="gold-btn mt-3 md:mt-0 py-2 px-4 rounded-lg flex items-center">
+                                <i class="bi bi-plus-circle mr-2"></i>
+                                Add New Case
+                            </button>
+                        </div>
+                        
+                        <!-- Filter Tabs -->
+                        <div class="mb-6 border-b border-white/20">
+                            <div class="flex flex-wrap -mb-px">
+                                <button class="inline-block p-4 text-yellow-300 border-b-2 border-yellow-300" onclick="filterCases('all')">
+                                    All Cases
+                                </button>
+                                <button class="inline-block p-4 text-white border-b-2 border-transparent hover:text-yellow-300" onclick="filterCases('ongoing')">
+                                    Ongoing
+                                </button>
+                                <button class="inline-block p-4 text-white border-b-2 border-transparent hover:text-yellow-300" onclick="filterCases('upcoming')">
+                                    Upcoming
+                                </button>
+                                <button class="inline-block p-4 text-white border-b-2 border-transparent hover:text-yellow-300" onclick="filterCases('closed')">
+                                    Closed
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Cases Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="casesGrid">
+                            <!-- Case cards will be added here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Payments Section -->
+                    <div id="paymentsContent" class="hidden fade-in">
+                        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+                            <h2 class="text-2xl font-bold text-white">Payments</h2>
+                            <button onclick="showAddPaymentModal()" class="gold-btn mt-3 md:mt-0 py-2 px-4 rounded-lg flex items-center">
+                                <i class="bi bi-plus-circle mr-2"></i>
+                                Add New Payment
+                            </button>
+                        </div>
+                        
+                        <!-- Summary Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="glass p-5 rounded-xl">
+                                <h4 class="text-white/70 mb-2">Total Collected</h4>
+                                <p class="text-3xl font-bold text-white">$42,500</p>
+                                <div class="mt-2 text-green-400 text-sm">
+                                    <i class="bi bi-arrow-up"></i>
+                                    <span>12% from last month</span>
+                                </div>
+                            </div>
+                            <div class="glass p-5 rounded-xl">
+                                <h4 class="text-white/70 mb-2">Pending</h4>
+                                <p class="text-3xl font-bold text-white">$15,000</p>
+                                <div class="mt-2 text-red-400 text-sm">
+                                    <i class="bi bi-arrow-up"></i>
+                                    <span>3 overdue payments</span>
+                                </div>
+                            </div>
+                            <div class="glass p-5 rounded-xl">
+                                <h4 class="text-white/70 mb-2">This Month</h4>
+                                <p class="text-3xl font-bold text-white">$8,300</p>
+                                <div class="mt-2 text-yellow-400 text-sm">
+                                    <i class="bi bi-arrow-right"></i>
+                                    <span>On track with target</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payments Table -->
+                        <div class="glass rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-white">
+                                    <thead>
+                                        <tr class="text-left border-b border-white/20">
+                                            <th class="py-4 px-6">Client</th>
+                                            <th class="py-4 px-6">Case</th>
+                                            <th class="py-4 px-6">Amount</th>
+                                            <th class="py-4 px-6">Date</th>
+                                            <th class="py-4 px-6">Status</th>
+                                            <th class="py-4 px-6">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentsTable">
+                                        <!-- Payment rows will be added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reminders Section -->
+                    <div id="remindersContent" class="hidden fade-in">
+                        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+                            <h2 class="text-2xl font-bold text-white">Reminders & Events</h2>
+                            <button onclick="showAddReminderModal()" class="gold-btn mt-3 md:mt-0 py-2 px-4 rounded-lg flex items-center">
+                                <i class="bi bi-plus-circle mr-2"></i>
+                                Add Reminder
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Calendar -->
+                            <div class="glass p-5 rounded-xl lg:col-span-2">
+                                <h4 class="text-lg font-semibold text-white mb-4">Calendar</h4>
+                                <div id="calendar" class="h-96 bg-white/5 rounded-lg p-4">
+                                    <!-- Calendar will be rendered here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Upcoming Reminders -->
+                            <div class="glass p-5 rounded-xl">
+                                <h4 class="text-lg font-semibold text-white mb-4">Upcoming Reminders</h4>
+                                <div class="space-y-3">
+                                    <div class="p-3 bg-white/5 rounded-lg">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-white font-medium">Hearing Preparation</p>
+                                                <p class="text-white/70 text-sm mt-1">Johnson vs State</p>
+                                            </div>
+                                            <div class="bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs">
+                                                Today
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="p-3 bg-white/5 rounded-lg">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-white font-medium">Document Deadline</p>
+                                                <p class="text-white/70 text-sm mt-1">Smith Property Case</p>
+                                            </div>
+                                            <div class="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs">
+                                                Tomorrow
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="p-3 bg-white/5 rounded-lg">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-white font-medium">Payment Due</p>
+                                                <p class="text-white/70 text-sm mt-1">Michael Johnson - $3,200</p>
+                                            </div>
+                                            <div class="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs">
+                                                2 days
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="p-3 bg-white/5 rounded-lg">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-white font-medium">Court Appearance</p>
+                                                <p class="text-white/70 text-sm mt-1">Harris Divorce Settlement</p>
+                                            </div>
+                                            <div class="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs">
+                                                Feb 10
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- All Reminders -->
+                            <div class="glass p-5 rounded-xl lg:col-span-3">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="text-lg font-semibold text-white">All Reminders</h4>
+                                    <div>
+                                        <select class="bg-white/10 text-white rounded p-2 outline-none">
+                                            <option value="all">All Types</option>
+                                            <option value="hearing">Hearings</option>
+                                            <option value="deadline">Deadlines</option>
+                                            <option value="payment">Payments</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-white">
+                                        <thead>
+                                            <tr class="text-left border-b border-white/20">
+                                                <th class="py-3 px-6">Title</th>
+                                                <th class="py-3 px-6">Associated With</th>
+                                                <th class="py-3 px-6">Date</th>
+                                                <th class="py-3 px-6">Type</th>
+                                                <th class="py-3 px-6">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="remindersTable">
+                                            <tr class="border-b border-white/10">
+                                                <td class="py-3 px-6">Hearing Preparation</td>
+                                                <td class="py-3 px-6">Johnson vs State</td>
+                                                <td class="py-3 px-6">Today, 4:00 PM</td>
+                                                <td class="py-3 px-6"><span class="status-badge ongoing">Hearing</span></td>
+                                                <td class="py-3 px-6">
+                                                    <button class="text-white/70 hover:text-white mr-2">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="text-white/70 hover:text-white">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-white/10">
+                                                <td class="py-3 px-6">Document Deadline</td>
+                                                <td class="py-3 px-6">Smith Property Case</td>
+                                                <td class="py-3 px-6">Tomorrow, 5:00 PM</td>
+                                                <td class="py-3 px-6"><span class="status-badge upcoming">Deadline</span></td>
+                                                <td class="py-3 px-6">
+                                                    <button class="text-white/70 hover:text-white mr-2">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="text-white/70 hover:text-white">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-white/10">
+                                                <td class="py-3 px-6">Payment Due</td>
+                                                <td class="py-3 px-6">Michael Johnson</td>
+                                                <td class="py-3 px-6">Jan 28, 2024</td>
+                                                <td class="py-3 px-6"><span class="status-badge pending">Payment</span></td>
+                                                <td class="py-3 px-6">
+                                                    <button class="text-white/70 hover:text-white mr-2">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="text-white/70 hover:text-white">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Add Client Modal -->
+    <div id="addClientModal" class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center px-4">
+        <div class="glass rounded-xl p-6 max-w-md w-full fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Add New Client</h3>
+                <button onclick="closeModal('addClientModal')" class="text-white hover:text-white/70">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="addClientForm" onsubmit="addClient(event)" class="space-y-4">
+                <div>
+                    <label for="clientName" class="block text-white/80 text-sm mb-1">Full Name</label>
+                    <input type="text" id="clientName" required class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none">
+                </div>
+                
+                <div>
+                    <label for="clientEmail" class="block text-white/80 text-sm mb-1">Email</label>
+                    <input type="email" id="clientEmail" required class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none">
+                </div>
+                
+                <div>
+                    <label for="clientPhone" class="block text-white/80 text-sm mb-1">Phone</label>
+                    <input type="tel" id="clientPhone" required class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none">
+                </div>
+                
+                <div>
+                    <label for="clientAddress" class="block text-white/80 text-sm mb-1">Address</label>
+                    <textarea id="clientAddress" rows="2" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none"></textarea>
+                </div>
+                
+                <div>
+                    <label for="clientNotes" class="block text-white/80 text-sm mb-1">Notes</label>
+                    <textarea id="clientNotes" rows="2" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none"></textarea>
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal('addClientModal')" class="flex-1 py-3 px-4 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-3 px-4 gold-btn font-medium rounded-lg">
+                        Add Client
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Case Modal -->
+    <div id="addCaseModal" class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center px-4">
+        <div class="glass rounded-xl p-6 max-w-md w-full fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Add New Case</h3>
+                <button onclick="closeModal('addCaseModal')" class="text-white hover:text-white/70">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="addCaseForm" onsubmit="addCase(event)" class="space-y-4">
+                <div>
+                    <label for="caseTitle" class="block text-white/80 text-sm mb-1">Case Title</label>
+                    <input type="text" id="caseTitle" required class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none">
+                </div>
+                
+                <div>
+                    <label for="caseClient" class="block text-white/80 text-sm mb-1">Client</label>
+                    <select id="caseClient" required class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                        <option value="">Select Client</option>
+                        <option value="1">John Doe</option>
+                        <option value="2">Jane Smith</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="caseType" class="block text-white/80 text-sm mb-1">Case Type</label>
+                    <select id="caseType" class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                        <option value="criminal">Criminal</option>
+                        <option value="civil">Civil</option>
+                        <option value="family">Family</option>
+                        <option value="property">Property</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="caseStatus" class="block text-white/80 text-sm mb-1">Status</label>
+                    <select id="caseStatus" class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                        <option value="ongoing">Ongoing</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="courtName" class="block text-white/80 text-sm mb-1">Court Name</label>
+                    <input type="text" id="courtName" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none">
+                </div>
+                
+                <div>
+                    <label for="hearingDate" class="block text-white/80 text-sm mb-1">Next Hearing Date</label>
+                    <input type="date" id="hearingDate" class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                </div>
+                
+                <div>
+                    <label for="caseDescription" class="block text-white/80 text-sm mb-1">Case Description</label>
+                    <textarea id="caseDescription" rows="3" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none"></textarea>
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal('addCaseModal')" class="flex-1 py-3 px-4 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-3 px-4 gold-btn font-medium rounded-lg">
+                        Add Case
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Payment Modal -->
+    <div id="addPaymentModal" class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center px-4">
+        <div class="glass rounded-xl p-6 max-w-md w-full fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Add New Payment</h3>
+                <button onclick="closeModal('addPaymentModal')" class="text-white hover:text-white/70">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="addPaymentForm" onsubmit="addPayment(event)" class="space-y-4">
+                <div>
+                    <label for="paymentClient" class="block text-white/80 text-sm mb-1">Client</label>
+                    <select id="paymentClient" required class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                        <option value="">Select Client</option>
+                        <option value="1">John Doe</option>
+                        <option value="2">Jane Smith</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="paymentCase" class="block text-white/80 text-sm mb-1">Related Case</label>
+                    <select id="paymentCase" class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                        <option value="">Select Case (Optional)</option>
+                        <option value="1">Property Dispute</option>
+                        <option value="2">Civil Case</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="paymentAmount" class="block text-white/80 text-sm mb-1">Amount ($)</label>
+                    <input type="number" id="paymentAmount" required min="0" step="0.01" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="paymentDate" class="block text-white/80 text-sm mb-1">Date</label>
+                        <input type="date" id="paymentDate" value="" required class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                    </div>
+                    
+                    <div>
+                        <label for="paymentStatus" class="block text-white/80 text-sm mb-1">Status</label>
+                        <select id="paymentStatus" class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="paymentMethod" class="block text-white/80 text-sm mb-1">Payment Method</label>
+                    <select id="paymentMethod" class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                        <option value="cash">Cash</option>
+                        <option value="check">Check</option>
+                        <option value="credit">Credit Card</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="online">Online Payment</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="paymentNotes" class="block text-white/80 text-sm mb-1">Notes</label>
+                    <textarea id="paymentNotes" rows="2" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none"></textarea>
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal('addPaymentModal')" class="flex-1 py-3 px-4 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-3 px-4 gold-btn font-medium rounded-lg">
+                        Add Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Reminder Modal -->
+    <div id="addReminderModal" class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center px-4">
+        <div class="glass rounded-xl p-6 max-w-md w-full fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Add New Reminder</h3>
+                <button onclick="closeModal('addReminderModal')" class="text-white hover:text-white/70">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="addReminderForm" onsubmit="addReminder(event)" class="space-y-4">
+                <div>
+                    <label for="reminderTitle" class="block text-white/80 text-sm mb-1">Title</label>
+                    <input type="text" id="reminderTitle" required class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none">
+                </div>
+                
+                <div>
+                    <label for="reminderType" class="block text-white/80 text-sm mb-1">Type</label>
+                    <select id="reminderType" required class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                        <option value="hearing">Hearing</option>
+                        <option value="deadline">Deadline</option>
+                        <option value="meeting">Meeting</option>
+                        <option value="payment">Payment</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="reminderDate" class="block text-white/80 text-sm mb-1">Date</label>
+                        <input type="date" id="reminderDate" required class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                    </div>
+                    
+                    <div>
+                        <label for="reminderTime" class="block text-white/80 text-sm mb-1">Time</label>
+                        <input type="time" id="reminderTime" required class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="reminderAssociated" class="block text-white/80 text-sm mb-1">Associated With</label>
+                    <select id="reminderAssociated" class="w-full p-3 rounded-lg bg-white/10 text-white outline-none">
+                        <option value="">Select (Optional)</option>
+                        <optgroup label="Clients">
+                            <option value="client-1">John Doe</option>
+                            <option value="client-2">Jane Smith</option>
+                        </optgroup>
+                        <optgroup label="Cases">
+                            <option value="case-1">Property Dispute</option>
+                            <option value="case-2">Civil Case</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="reminderNotes" class="block text-white/80 text-sm mb-1">Notes</label>
+                    <textarea id="reminderNotes" rows="2" class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-white/50 outline-none"></textarea>
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal('addReminderModal')" class="flex-1 py-3 px-4 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-3 px-4 gold-btn font-medium rounded-lg">
+                        Add Reminder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dummy data
+        const dummyClients = [
+            { id: 1, name: "John Doe", email: "john@example.com", phone: "123-456-7890", cases: 3 },
+            { id: 2, name: "Jane Smith", email: "jane@example.com", phone: "098-765-4321", cases: 1 },
+            { id: 3, name: "Robert Brown", email: "robert@example.com", phone: "555-123-4567", cases: 2 },
+            { id: 4, name: "Emily White", email: "emily@example.com", phone: "777-888-9999", cases: 1 },
+            { id: 5, name: "Michael Johnson", email: "michael@example.com", phone: "222-333-4444", cases: 0 }
+        ];
+
+        const dummyCases = [
+            { id: 1, title: "Property Dispute", client: "John Doe", status: "ongoing", court: "High Court", nextHearing: "2024-02-01" },
+            { id: 2, title: "Civil Case", client: "Jane Smith", status: "upcoming", court: "District Court", nextHearing: "2024-02-15" },
+            { id: 3, title: "Criminal Defense", client: "Robert Brown", status: "ongoing", court: "Criminal Court", nextHearing: "2024-02-03" },
+            { id: 4, title: "Copyright Infringement", client: "Emily White", status: "ongoing", court: "Federal Court", nextHearing: "2024-02-10" },
+            { id: 5, title: "Insurance Claim", client: "John Doe", status: "closed", court: "Civil Court", nextHearing: "2024-01-20" },
+            { id: 6, title: "Divorce Settlement", client: "John Doe", status: "ongoing", court: "Family Court", nextHearing: "2024-02-06" }
+        ];
+
+        const dummyPayments = [
+            { id: 1, client: "John Doe", case: "Property Dispute", amount: 5000, date: "2024-01-15", status: "paid" },
+            { id: 2, client: "Jane Smith", case: "Civil Case", amount: 3000, date: "2024-01-20", status: "pending" },
+            { id: 3, client: "Robert Brown", case: "Criminal Defense", amount: 2500, date: "2024-01-10", status: "paid" },
+            { id: 4, client: "Emily White", case: "Copyright Infringement", amount: 1800, date: "2024-01-05", status: "paid" },
+            { id: 5, client: "John Doe", case: "Insurance Claim", amount: 1200, date: "2024-01-02", status: "paid" },
+            { id: 6, client: "Michael Johnson", case: "Property Dispute", amount: 3200, date: "2024-01-25", status: "pending" }
+        ];
+
+        // Mobile menu handling
+        function toggleMobileMenu() {
+            const mobileSidebar = document.getElementById('mobileSidebar');
+            mobileSidebar.classList.toggle('hidden');
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileSidebar').classList.add('hidden');
+        }
+
+        document.getElementById('mobileMenuBtn').addEventListener('click', toggleMobileMenu);
+
+        // Authentication
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple validation
+            if (email && password) {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadDashboard();
+            }
+        }
+
+        function logout() {
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            // Reset form
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            ['dashboardContent', 'clientsContent', 'casesContent', 'paymentsContent', 'remindersContent'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Update active nav state
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.onclick.toString().includes(sectionId)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Load section data
+            if (sectionId === 'dashboardContent') loadDashboard();
+            if (sectionId === 'clientsContent') loadClients();
+            if (sectionId === 'casesContent') loadCases();
+            if (sectionId === 'paymentsContent') loadPayments();
+            if (sectionId === 'remindersContent') loadCalendar();
+        }
+
+        // Dashboard
+        function loadDashboard() {
+            // Set current date in dashboard
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+            
+            // Initialize chart
+            const casesChart = document.getElementById('casesChart');
+            if (casesChart) {
+                const ctx = casesChart.getContext('2d');
+                
+                // Destroy existing chart if it exists
+                if (window.myChart) {
+                    window.myChart.destroy();
+                }
+                
+                // Create new chart
+                window.myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [
+                            {
+                                label: 'New Cases',
+                                data: [5, 8, 12, 9, 12, 15],
+                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                borderColor: '#3B82F6',
+                                borderWidth: 2,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Closed Cases',
+                                data: [2, 4, 5, 7, 6, 9],
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                borderColor: '#10B981',
+                                borderWidth: 2,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Clients Management
+        function loadClients() {
+            const tableBody = document.getElementById('clientsTable');
+            tableBody.innerHTML = dummyClients.map(client => `
+                <tr class="border-b border-white/20 hover:bg-white/5 transition">
+                    <td class="py-4 px-6">${client.name}</td>
+                    <td class="py-4 px-6">${client.email}</td>
+                    <td class="py-4 px-6">${client.phone}</td>
+                    <td class="py-4 px-6">
+                        <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-lg">${client.cases} cases</span>
+                    </td>
+                    <td class="py-4 px-6">
+                        <button onclick="viewClient(${client.id})" class="text-white/70 hover:text-white mr-2" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button onclick="editClient(${client.id})" class="text-white/70 hover:text-white mr-2" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button onclick="deleteClient(${client.id})" class="text-white/70 hover:text-white" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Cases Management
+        function loadCases() {
+            const casesGrid = document.getElementById('casesGrid');
+            casesGrid.innerHTML = dummyCases.map(case_ => `
+                <div class="glass p-5 rounded-xl">
+                    <div class="flex justify-between items-start">
+                        <h4 class="text-xl font-semibold text-white">${case_.title}</h4>
+                        <span class="status-badge ${case_.status}">${case_.status.charAt(0).toUpperCase() + case_.status.slice(1)}</span>
+                    </div>
+                    <p class="text-white/70 mt-2">Client: ${case_.client}</p>
+                    <p class="text-white/70">Court: ${case_.court}</p>
+                    <p class="text-white/70">Next Hearing: ${formatDate(case_.nextHearing)}</p>
+                    
+                    <div class="mt-6 flex justify-between">
+                        <button onclick="viewCase(${case_.id})" class="text-white/70 hover:text-white px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition">
+                            <i class="bi bi-eye mr-1"></i> View
+                        </button>
+                        <div>
+                            <button onclick="editCase(${case_.id})" class="text-white/70 hover:text-white mr-2">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button onclick="deleteCase(${case_.id})" class="text-white/70 hover:text-white">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterCases(filter) {
+            // Highlight active filter
+            const filterButtons = document.querySelectorAll('#casesContent button');
+            filterButtons.forEach(button => {
+                button.classList.remove('text-yellow-300', 'border-yellow-300');
+                button.classList.add('text-white', 'border-transparent');
+            });
+            
+            // Add active class to clicked button
+            event.currentTarget.classList.remove('text-white', 'border-transparent');
+            event.currentTarget.classList.add('text-yellow-300', 'border-yellow-300');
+            
+            // Filter cases
+            const casesGrid = document.getElementById('casesGrid');
+            
+            if (filter === 'all') {
+                loadCases();
+            } else {
+                const filteredCases = dummyCases.filter(case_ => case_.status === filter);
+                
+                casesGrid.innerHTML = filteredCases.length > 0 ? 
+                    filteredCases.map(case_ => `
+                        <div class="glass p-5 rounded-xl">
+                            <div class="flex justify-between items-start">
+                                <h4 class="text-xl font-semibold text-white">${case_.title}</h4>
+                                <span class="status-badge ${case_.status}">${case_.status.charAt(0).toUpperCase() + case_.status.slice(1)}</span>
+                            </div>
+                            <p class="text-white/70 mt-2">Client: ${case_.client}</p>
+                            <p class="text-white/70">Court: ${case_.court}</p>
+                            <p class="text-white/70">Next Hearing: ${formatDate(case_.nextHearing)}</p>
+                            
+                            <div class="mt-6 flex justify-between">
+                                <button onclick="viewCase(${case_.id})" class="text-white/70 hover:text-white px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition">
+                                    <i class="bi bi-eye mr-1"></i> View
+                                </button>
+                                <div>
+                                    <button onclick="editCase(${case_.id})" class="text-white/70 hover:text-white mr-2">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button onclick="deleteCase(${case_.id})" class="text-white/70 hover:text-white">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : 
+                    `<div class="col-span-full text-center py-10">
+                        <p class="text-white/70">No ${filter} cases found.</p>
+                    </div>`;
+            }
+        }
+
+        // Payments Management
+        function loadPayments() {
+            const tableBody = document.getElementById('paymentsTable');
+            tableBody.innerHTML = dummyPayments.map(payment => `
+                <tr class="border-b border-white/20 hover:bg-white/5 transition">
+                    <td class="py-4 px-6">${payment.client}</td>
+                    <td class="py-4 px-6">${payment.case}</td>
+                    <td class="py-4 px-6">$${payment.amount.toLocaleString()}</td>
+                    <td class="py-4 px-6">${formatDate(payment.date)}</td>
+                    <td class="py-4 px-6">
+                        <span class="status-badge ${payment.status === 'paid' ? 'paid' : 'pending'}">
+                            ${payment.status === 'paid' ? 'Paid' : 'Pending'}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6">
+                        <button onclick="editPayment(${payment.id})" class="text-white/70 hover:text-white mr-2" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button onclick="deletePayment(${payment.id})" class="text-white/70 hover:text-white" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Calendar & Reminders
+        function loadCalendar() {
+            const calendar = document.getElementById('calendar');
+            // In a real application, you'd integrate a calendar library like FullCalendar here
+            calendar.innerHTML = `
+                <div class="text-center py-20">
+                    <i class="bi bi-calendar-week text-4xl text-white/50"></i>
+                    <p class="text-white/70 mt-4">Calendar functionality would be implemented with a library like FullCalendar</p>
+                </div>
+            `;
+        }
+
+        // Modals
+        function showAddClientModal() {
+            document.getElementById('addClientModal').classList.remove('hidden');
+            document.getElementById('clientName').focus();
+        }
+
+        function showAddCaseModal() {
+            document.getElementById('addCaseModal').classList.remove('hidden');
+            document.getElementById('caseTitle').focus();
+            
+            // Set default date to tomorrow for hearing
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('hearingDate').value = formatDateForInput(tomorrow);
+        }
+
+        function showAddPaymentModal() {
+            document.getElementById('addPaymentModal').classList.remove('hidden');
+            document.getElementById('paymentClient').focus();
+            
+            // Set default date to today
+            document.getElementById('paymentDate').value = formatDateForInput(new Date());
+        }
+
+        function showAddReminderModal() {
+            document.getElementById('addReminderModal').classList.remove('hidden');
+            document.getElementById('reminderTitle').focus();
+            
+            // Set default date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('reminderDate').value = formatDateForInput(tomorrow);
+            
+            // Set default time to 9 AM
+            document.getElementById('reminderTime').value = '09:00';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // CRUD Operations
+        function addClient(event) {
+            event.preventDefault();
+            const name = document.getElementById('clientName').value;
+            const email = document.getElementById('clientEmail').value;
+            const phone = document.getElementById('clientPhone').value;
+            
+            // Add new client to array (in a real app, this would be an API call)
+            const newClient = {
+                id: dummyClients.length + 1,
+                name: name,
+                email: email,
+                phone: phone,
+                cases: 0
+            };
+            
+            dummyClients.push(newClient);
+            closeModal('addClientModal');
+            loadClients();
+            
+            // Reset form
+            document.getElementById('addClientForm').reset();
+            
+            // Show success message (toast)
+            showToast(`Client ${name} has been added successfully`);
+        }
+
+        function addCase(event) {
+            event.preventDefault();
+            const title = document.getElementById('caseTitle').value;
+            const clientId = document.getElementById('caseClient').value;
+            const client = dummyClients.find(c => c.id == clientId)?.name || 'Unknown Client';
+            const status = document.getElementById('caseStatus').value;
+            const court = document.getElementById('courtName').value;
+            const nextHearing = document.getElementById('hearingDate').value;
+            
+            // Add new case to array (in a real app, this would be an API call)
+            const newCase = {
+                id: dummyCases.length + A1,
+                title: title,
+                client: client,
+                status: status,
+                court: court,
+                nextHearing: nextHearing
+            };
+            
+            dummyCases.push(newCase);
+            closeModal('addCaseModal');
+            loadCases();
+            
+            // Reset form
+            document.getElementById('addCaseForm').reset();
+            
+            // Show success message
+            showToast(`Case "${title}" has been added successfully`);
+        }
+
+        function addPayment(event) {
+            event.preventDefault();
+            const clientId = document.getElementById('paymentClient').value;
+            const client = dummyClients.find(c => c.id == clientId)?.name || 'Unknown Client';
+            const caseId = document.getElementById('paymentCase').value;
+            const case_ = dummyCases.find(c => c.id == caseId)?.title || 'General';
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const date = document.getElementById('paymentDate').value;
+            const status = document.getElementById('paymentStatus').value;
+            
+            // Add new payment to array (in a real app, this would be an API call)
+            const newPayment = {
+                id: dummyPayments.length + 1,
+                client: client,
+                case: case_,
+                amount: amount,
+                date: date,
+                status: status
+            };
+            
+            dummyPayments.push(newPayment);
+            closeModal('addPaymentModal');
+            loadPayments();
+            
+            // Reset form
+            document.getElementById('addPaymentForm').reset();
+            
+            // Show success message
+            showToast(`Payment of $${amount.toLocaleString()} from ${client} has been added successfully`);
+        }
+
+        function addReminder(event) {
+            event.preventDefault();
+            const title = document.getElementById('reminderTitle').value;
+            
+            closeModal('addReminderModal');
+            
+            // Reset form
+            document.getElementById('addReminderForm').reset();
+            
+            // Show success message
+            showToast(`Reminder "${title}" has been added successfully`);
+        }
+        
+        // View functions
+        function viewClient(id) {
+            // In a real app, this would navigate to client details page or show a detailed modal
+            const client = dummyClients.find(c => c.id === id);
+            alert(`View Client Details: ${client.name}`);
+        }
+        
+        function viewCase(id) {
+            // In a real app, this would navigate to case details page or show a detailed modal
+            const case_ = dummyCases.find(c => c.id === id);
+            alert(`View Case Details: ${case_.title}`);
+        }
+
+        // Edit functions
+        function editClient(id) {
+            // In a real app, this would populate a form with client data
+            const client = dummyClients.find(c => c.id === id);
+            alert(`Edit Client: ${client.name}`);
+        }
+
+        function editCase(id) {
+            // In a real app, this would populate a form with case data
+            const case_ = dummyCases.find(c => c.id === id);
+            alert(`Edit Case: ${case_.title}`);
+        }
+
+        function editPayment(id) {
+            // In a real app, this would populate a form with payment data
+            const payment = dummyPayments.find(p => p.id === id);
+            alert(`Edit Payment: $${payment.amount} for ${payment.client}`);
+        }
+
+        // Delete functions
+        function deleteClient(id) {
+            if (confirm('Are you sure you want to delete this client?')) {
+                // Remove client from array (in a real app, this would be an API call)
+                const index = dummyClients.findIndex(c => c.id === id);
+                if (index > -1) {
+                    const clientName = dummyClients[index].name;
+                    dummyClients.splice(index, 1);
+                    loadClients();
+                    showToast(`Client ${clientName} has been deleted`);
+                }
+            }
+        }
+
+        function deleteCase(id) {
+            if (confirm('Are you sure you want to delete this case?')) {
+                // Remove case from array (in a real app, this would be an API call)
+                const index = dummyCases.findIndex(c => c.id === id);
+                if (index > -1) {
+                    const caseTitle = dummyCases[index].title;
+                    dummyCases.splice(index, 1);
+                    loadCases();
+                    showToast(`Case "${caseTitle}" has been deleted`);
+                }
+            }
+        }
+
+        function deletePayment(id) {
+            if (confirm('Are you sure you want to delete this payment?')) {
+                // Remove payment from array (in a real app, this would be an API call)
+                const index = dummyPayments.findIndex(p => p.id === id);
+                if (index > -1) {
+                    const paymentAmount = dummyPayments[index].amount;
+                    const clientName = dummyPayments[index].client;
+                    dummyPayments.splice(index, 1);
+                    loadPayments();
+                    showToast(`Payment of $${paymentAmount} from ${clientName} has been deleted`);
+                }
+            }
+        }
+
+        // Helper functions
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function formatDateForInput(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // Toast notification
+        function showToast(message) {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 glass px-4 py-2 rounded-lg text-white max-w-xs fade-in';
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="bi bi-check-circle text-green-400 mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            // Add to DOM
+            document.body.appendChild(toast);
+            
+            // Remove after delay
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set today's date in payment form
+            const today = new Date();
+            if (document.getElementById('paymentDate')) {
+                document.getElementById('paymentDate').value = formatDateForInput(today);
+            }
+            
+            // Start with login form
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
